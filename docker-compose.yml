@@ -1,0 +1,16 @@
+version: "3"
+services:
+  mydemo:
+    build: ./
+    image: "segleralex/swarm-radio:latest"
+    ports:
+    - "3000:3000"
+    deploy:
+      replicas: 7
+    networks:
+    - myswarmnet
+networks:
+  myswarmnet:
+    driver: "overlay"
+    driver_opts:
+      encrypted: ""

@@ -1,0 +1,26 @@
+{
+  "name": "swarm-demo",
+  "version": "1.0.0",
+  "description": "swarm-demo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.imagination.at:AlexanderM/swarm-demo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "body-parser": "^1.16.0",
+    "express": "^4.14.0",
+    "geoip-lite": "^1.1.9",
+    "geoip-lite-country": "^1.1.5",
+    "moira": "^1.1.2",
+    "request": "^2.79.0",
+    "request-promise-native": "^1.0.3"
+  }
+}
