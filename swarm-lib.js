@@ -3,8 +3,11 @@
 const dns = require('dns');
 const os = require('os');
 const bluebird = require('bluebird');
+const moira = require('moira');
+const geoip = require('geoip-lite');
 
 var lookup = bluebird.promisify(dns.lookup);
+var reverse = bluebird.promisify(dns.reverse);
 
 function getOwnIps() {
     var ownIPs = [];
@@ -49,6 +52,36 @@ function getIPs() {
     });
 }
 
+function getExternalInfos() {
+    var infos = null;
+    return new Promise((resolve, reject) => {
+        moira.getIP(function(err, ip, service) {
+            if (err) {
+                reject(err);
+            } else {
+                console.log('Your external IP address is ' + ip);
+                console.log('The fastest service to return your IP address was ' + service);
+
+                var geo = geoip.lookup(ip);
+                console.log(geo);
+
+                resolve({
+                    ip: ip,
+                    country: geo.country
+                });
+            }
+        });
+    }).then((_infos)=>{
+        infos = _infos;
+        return reverse(infos.ip);
+    }).then((hostnames)=>{
+        infos.names = hostnames;
+        console.log('hostnames:'+JSON.stringify(hostnames));
+        return infos;
+    });
+}
+
 module.exports = {
-    'getIPs': getIPs
+    'getIPs': getIPs,
+    'getExternalInfos': getExternalInfos
 };

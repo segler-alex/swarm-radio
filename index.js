@@ -6,36 +6,30 @@ const swarmLib = require('./swarm-lib.js');
 const httpDetail = require('./http-detail.js');
 const bodyParser = require('body-parser');
 const request = require('request-promise-native');
-const moira = require( 'moira' );
-const geoip = require('geoip-lite');
 
 var app = express();
 app.use(bodyParser.json());
 
 var localIp = null;
-var country = null;
-swarmLib.getIPs().then(function(result) {
+var external = null;
+
+swarmLib.getExternalInfos().then(function(external) {
+    external = external;
+    return swarmLib.getIPs();
+}).then((result) => {
     localIp = result.ownInternalIP;
 }).catch(function(err) {
     console.error('could not cache local ip ' + err);
 });
 
-moira.getIP( function( err, ip, service ){
-    if( err ) throw err;
-
-    console.log( 'Your external IP address is ' + ip );
-    console.log( 'The fastest service to return your IP address was ' + service );
-
-    var geo = geoip.lookup(ip);
-    console.log(geo);
-    country = geo;
-});
-
 app.get('/', function(req, res) {
     swarmLib.getIPs().then(function(result) {
         res.send('Hello World!<br/>' +
-            '<br/>Hostname:' + os.hostname() +
-            '<br/>Own Internal IP:<pre>' + JSON.stringify(result.ownInternalIP, null, ' ') + '</pre>' +
+            '<br/>Hostname:<pre>' + os.hostname() + '</pre>' +
+            '<br/>Own Internal IP:<pre>' + result.ownInternalIP + '</pre>' +
+            '<br/>Own External IP:<pre>' + external.ip + '</pre>' +
+            '<br/>Country code:<pre>' + external.country + '</pre>' +
+            '<br/>Own External hostnames:<pre>' + JSON.stringify(external.names, null, ' ') + '</pre>' +
             '<br/>Own IPs:<pre>' + JSON.stringify(result.ownIPs, null, ' ') + '</pre>' +
             '<br/>Found others:<pre>' + JSON.stringify(result.otherInternalIPs, null, ' ') + '</pre>');
     }).catch(function(err) {
@@ -91,7 +85,8 @@ app.post('/check', function(req, res) {
             res.json({
                 ok: true,
                 self: localIp,
-                geo: country,
+                selfExternal: external.ip,
+                country: external.country,
                 result: data
             });
         }).catch((err) => {
