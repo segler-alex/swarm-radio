@@ -13,8 +13,8 @@ app.use(bodyParser.json());
 var localIp = null;
 var external = null;
 
-swarmLib.getExternalInfos().then(function(external) {
-    external = external;
+swarmLib.getExternalInfos().then(function(_external) {
+    external = _external;
     return swarmLib.getIPs();
 }).then((result) => {
     localIp = result.ownInternalIP;
