@@ -7,8 +7,18 @@ const httpDetail = require('./http-detail.js');
 const bodyParser = require('body-parser');
 const request = require('request-promise-native');
 
+const models = require('./models');
+
+var routes_countries = require('./routes/routes-countries.js')(models);
+
 var app = express();
+
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 app.use(bodyParser.json());
+
+app.use(routes_countries);
 
 var localIp = null;
 var external = null;
