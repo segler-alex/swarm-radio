@@ -1,24 +1,38 @@
 'use strict';
 
 const express = require('express');
+const xml = require('xml');
 var router = express.Router();
 var models = null;
 
 function findCountries(req, res, format, filter) {
     filter = filter || '';
-    models.Station.findCountries(filter).then((result) => {
+    models.Station.findCountries(filter).then((items) => {
         if (format === 'xml') {
-            res.send(result);
+            var converted = {
+                result: items.map((item) => {
+                    var realItem = item.get({plain:true});
+                    return {
+                        country: {
+                            _attr: {
+                                value: realItem.value,
+                                stationcount: realItem.stationcount
+                            }
+                        }
+                    };
+                })
+            };
+            res.type('text/xml').send(xml(converted, { declaration: true }));
         } else if (format === 'json') {
-            res.json(result);
+            res.type('application/json').json(items);
         } else {
-            res.status(400).json({
+            res.status(400).type('application/json').json({
                 'ok': false,
                 'msg': 'wrong format ' + format
             });
         }
     }).catch((err) => {
-        res.status(500).json({
+        res.status(500).type('application/json').json({
             'ok': false,
             'msg': err
         });
@@ -46,7 +60,7 @@ router.get('/webservice/:format/countries/:filter', function(req, res) {
     findCountries(req, res, format, filter);
 });
 
-module.exports = function(_models){
+module.exports = function(_models) {
     models = _models;
     return router;
 };
