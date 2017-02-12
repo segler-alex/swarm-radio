@@ -85,6 +85,34 @@ module.exports = function(sequelize, DataTypes) {
                     },
                     order: 'value'
                 });
+            },
+            findLanguages: function(name) {
+                return Station.findAll({
+                    attributes: [
+                        ['Language', 'value'],
+                        [sequelize.fn('COUNT', sequelize.col('Language')), 'stationcount']
+                    ],
+                    group: ["Language"],
+                    where: {
+                        $and: [{
+                                Language: {
+                                    $not: null
+                                }
+                            },
+                            {
+                                Language: {
+                                    $not: ''
+                                }
+                            },
+                            {
+                                Language: {
+                                    $like: '%' + name + '%'
+                                }
+                            }
+                        ]
+                    },
+                    order: 'value'
+                });
             }
         },
         tableName: 'Station'
