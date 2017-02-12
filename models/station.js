@@ -113,6 +113,43 @@ module.exports = function(sequelize, DataTypes) {
                     },
                     order: 'value'
                 });
+            },
+            findStates: function(name, country) {
+                var and = [{
+                        Subcountry: {
+                            $not: null
+                        }
+                    },
+                    {
+                        Subcountry: {
+                            $not: ''
+                        }
+                    },
+                    {
+                        Subcountry: {
+                            $like: '%' + name + '%'
+                        }
+                    }
+                ];
+                if (country) {
+                    and.push({
+                        Country: {
+                            $eq: country
+                        }
+                    });
+                }
+                return Station.findAll({
+                    attributes: [
+                        ['Subcountry', 'value'],
+                        ['Country', 'country'],
+                        [sequelize.fn('COUNT', sequelize.col('Subcountry')), 'stationcount']
+                    ],
+                    group: ["Subcountry", "Country"],
+                    where: {
+                        $and: and
+                    },
+                    order: 'value'
+                });
             }
         },
         tableName: 'Station'

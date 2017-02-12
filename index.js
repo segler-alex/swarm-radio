@@ -19,6 +19,7 @@ if (!SERVICE){
 
 var routes_countries = require('./routes/routes-countries.js')(models);
 var routes_languages = require('./routes/routes-languages.js')(models);
+var routes_states = require('./routes/routes-states.js')(models);
 var routes_codecs = require('./routes/routes-codecs.js')(models);
 var routes_check = require('./routes/routes-check.js')(SERVICE);
 
@@ -29,6 +30,7 @@ app.use(bodyParser.json());
 
 app.use(routes_countries);
 app.use(routes_languages);
+app.use(routes_states);
 app.use(routes_codecs);
 app.use(routes_check);
 
