@@ -57,6 +57,34 @@ module.exports = function(sequelize, DataTypes) {
                     },
                     order: 'value'
                 });
+            },
+            findCodecs: function(name) {
+                return Station.findAll({
+                    attributes: [
+                        ['Codec', 'value'],
+                        [sequelize.fn('COUNT', sequelize.col('Codec')), 'stationcount']
+                    ],
+                    group: ["Codec"],
+                    where: {
+                        $and: [{
+                                Codec: {
+                                    $not: null
+                                }
+                            },
+                            {
+                                Codec: {
+                                    $not: ''
+                                }
+                            },
+                            {
+                                Codec: {
+                                    $like: '%' + name + '%'
+                                }
+                            }
+                        ]
+                    },
+                    order: 'value'
+                });
             }
         },
         tableName: 'Station'
