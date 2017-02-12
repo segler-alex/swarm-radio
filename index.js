@@ -2,16 +2,23 @@
 
 const os = require('os');
 const express = require('express');
-const swarmLib = require('./swarm-lib.js');
-const httpDetail = require('./http-detail.js');
+const swarmLib = require('./swarm-lib.js')();
 const bodyParser = require('body-parser');
 const request = require('request-promise-native');
 
 const models = require('./models');
 
-var routes_countries = require('./routes/routes-countries.js')(models);
-
 var app = express();
+var external = null;
+var SERVICE = process.env.SERVICE;
+
+if (!SERVICE){
+    console.log('SERVICE environment variable is not set!');
+    process.exit(1);
+}
+
+var routes_countries = require('./routes/routes-countries.js')(models);
+var routes_check = require('./routes/routes-check.js')(SERVICE);
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -19,21 +26,16 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 app.use(routes_countries);
-
-var localIp = null;
-var external = null;
+app.use(routes_check);
 
 swarmLib.getExternalInfos().then(function(_external) {
     external = _external;
-    return swarmLib.getIPs();
-}).then((result) => {
-    localIp = result.ownInternalIP;
 }).catch(function(err) {
     console.error('could not cache local ip ' + err);
 });
 
 app.get('/', function(req, res) {
-    swarmLib.getIPs().then(function(result) {
+    swarmLib.getIPs(SERVICE).then(function(result) {
         res.send('Hello World!<br/>' +
             '<br/>Hostname:<pre>' + os.hostname() + '</pre>' +
             '<br/>Own Internal IP:<pre>' + result.ownInternalIP + '</pre>' +
@@ -45,67 +47,6 @@ app.get('/', function(req, res) {
     }).catch(function(err) {
         res.status(500).send(err);
     });
-});
-
-app.post('/checkall', function(req, res) {
-    var url = req.body.url;
-    var result;
-    swarmLib.getIPs().then(function(_result) {
-        result = _result;
-        var list = [];
-        for (var i = 0; i < result.allInternalIPs.length; i++) {
-            list.push(request.post({
-                url: 'http://' + result.allInternalIPs[i] + ':3000/check',
-                json: {
-                    url: url
-                }
-            }));
-        }
-        return Promise.all(list);
-    }).then((data) => {
-        res.json({
-            ok: true,
-            self: localIp,
-            data: data
-        });
-    }).catch((err) => {
-        res.status(400).send({
-            ok: false,
-            url: url,
-            result: result,
-            err: err
-        });
-    });
-});
-
-app.post('/check', function(req, res) {
-    var url = req.body.url;
-    console.log('check:' + url);
-    if (!url) {
-        console.log('check empty url');
-        res.status(400).json({
-            ok: false
-        });
-    } else {
-        console.log('check url ok:' + url);
-        httpDetail.getHeaderRecursive(url, {
-            debug: true
-        }).then((data) => {
-            console.log('check url finished:' + url);
-            res.json({
-                ok: true,
-                self: localIp,
-                selfExternal: external.ip,
-                country: external.country,
-                result: data
-            });
-        }).catch((err) => {
-            console.error(err);
-            res.status(403).json({
-                ok: false
-            });
-        });
-    }
 });
 
 app.listen(3000, function() {

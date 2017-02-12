@@ -11,7 +11,9 @@ function findCountries(req, res, format, filter) {
         if (format === 'xml') {
             var converted = {
                 result: items.map((item) => {
-                    var realItem = item.get({plain:true});
+                    var realItem = item.get({
+                        plain: true
+                    });
                     return {
                         country: {
                             _attr: {
@@ -22,7 +24,9 @@ function findCountries(req, res, format, filter) {
                     };
                 })
             };
-            res.type('text/xml').send(xml(converted, { declaration: true }));
+            res.type('text/xml').send(xml(converted, {
+                declaration: true
+            }));
         } else if (format === 'json') {
             res.type('application/json').json(items);
         } else {

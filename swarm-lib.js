@@ -24,12 +24,16 @@ function getOwnIps() {
     return ownIPs;
 }
 
-function getIPs() {
+function getIPs(serviceName) {
+    if (!serviceName) {
+        return Promise.reject(new Error('serviceName parameter missing'));
+    }
     var ownIPs = getOwnIps();
     var dnsOptions = {
         all: true
     };
-    return lookup('tasks.mydemo', dnsOptions).then(function(addresses) {
+    var serviceNameDns = 'tasks.' + serviceName;
+    return lookup(serviceNameDns, dnsOptions).then(function(addresses) {
         var self = null;
         var others = [];
         var all = [];
@@ -53,35 +57,64 @@ function getIPs() {
 }
 
 function getExternalInfos() {
+    console.log("getExternalInfos()");
     var infos = null;
     return new Promise((resolve, reject) => {
         moira.getIP(function(err, ip, service) {
             if (err) {
                 reject(err);
             } else {
-                console.log('Your external IP address is ' + ip);
-                console.log('The fastest service to return your IP address was ' + service);
-
                 var geo = geoip.lookup(ip);
-                console.log(geo);
-
                 resolve({
                     ip: ip,
                     country: geo.country
                 });
             }
         });
-    }).then((_infos)=>{
+    }).then((_infos) => {
         infos = _infos;
-        return reverse(infos.ip);
-    }).then((hostnames)=>{
-        infos.names = hostnames;
-        console.log('hostnames:'+JSON.stringify(hostnames));
+        return reverse(infos.ip).catch((err) => {
+            console.log('ignore reverse lookup error');
+        });
+    }).then((_names) => {
+        infos.names = _names || [];
         return infos;
     });
 }
 
-module.exports = {
-    'getIPs': getIPs,
-    'getExternalInfos': getExternalInfos
+var externalPromise = null;
+var externalLastCheckTime = 0;
+
+var servicePromise = {};
+var serviceLastCheckTime = {};
+
+module.exports = function() {
+    function getExternalInfosCached() {
+        var currentTime = process.uptime();
+        if (currentTime > externalLastCheckTime + 60) {
+            externalLastCheckTime = process.uptime();
+            externalPromise = null;
+        }
+        if (!externalPromise) {
+            externalPromise = getExternalInfos();
+        }
+        return externalPromise;
+    }
+
+    function getIPsCached(serviceName){
+        var currentTime = process.uptime();
+        if (currentTime > serviceLastCheckTime[serviceName] + 60) {
+            serviceLastCheckTime[serviceName] = process.uptime();
+            servicePromise[serviceName] = null;
+        }
+        if (!servicePromise[serviceName]) {
+            servicePromise[serviceName] = getIPs(serviceName);
+        }
+        return servicePromise[serviceName];
+    }
+
+    return {
+        'getIPs': getIPsCached,
+        'getExternalInfos': getExternalInfosCached
+    };
 };
