@@ -103,7 +103,10 @@ module.exports = function() {
 
     function getIPsCached(serviceName){
         var currentTime = process.uptime();
-        if (currentTime > serviceLastCheckTime[serviceName] + 60) {
+        if (!serviceLastCheckTime[serviceName]){
+            serviceLastCheckTime[serviceName] = 0;
+        }
+        if (currentTime > serviceLastCheckTime[serviceName] + 5) {
             serviceLastCheckTime[serviceName] = process.uptime();
             servicePromise[serviceName] = null;
         }
