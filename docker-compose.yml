@@ -1,12 +1,27 @@
 version: "3"
 services:
-  mydemo:
+  db:
+    image: "mariadb:10.1"
+    environment:
+    - MYSQL_RANDOM_ROOT_PASSWORD=yes
+    - MYSQL_DATABASE=radio
+    - MYSQL_USER=radiouser
+    - MYSQL_PASSWORD=password
+    networks:
+    - myswarmnet
+    deploy:
+      replicas: 1
+  api:
     build: ./
     image: "segleralex/swarm-radio:latest"
+    environment:
+    - SERVICE=api
+    - DB=db
     ports:
     - "3000:3000"
     deploy:
-      replicas: 7
+      # mode: global
+      replicas: 2
     networks:
     - myswarmnet
 networks:

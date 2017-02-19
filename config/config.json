@@ -21,9 +21,9 @@
   },
   "production": {
     "username": "radiouser",
-    "password": null,
+    "password": "password",
     "database": "radio",
-    "host": "127.0.0.1",
+    "host": "db",
     "dialect": "mysql",
     "define": {
         "timestamps": false
